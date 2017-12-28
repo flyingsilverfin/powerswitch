@@ -32,7 +32,8 @@
 
 namespace graphlab {
 
-
+using boost::uint32_t; // MOD Joshua Send to make compile
+using boost::uint64_t; 
 
 /**
  * A cuckoo hash map which requires the user to

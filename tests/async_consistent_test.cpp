@@ -323,7 +323,7 @@ int main(int argc, char** argv) {
   clopts.set_scheduler_type("queued_fifo");
   std::cout << "Creating a powerlaw graph" << std::endl;
   graph_type graph(dc, clopts);
-  graph.load_synthetic_powerlaw(100);
+  graph.load_synthetic_powerlaw(2.1, 100); // MOD joshua send to make compile
 
   test_in_neighbors(dc, clopts, graph);
   test_out_neighbors(dc, clopts, graph);

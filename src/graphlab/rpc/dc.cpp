@@ -68,6 +68,12 @@ namespace dc_impl {
 bool thrlocal_sequentialization_key_initialized = false;
 pthread_key_t thrlocal_sequentialization_key;
 
+
+// MOD Joshua Send to fix compile
+  distributed_control* get_last_dc() {
+	return distributed_control::get_last_dc();
+  }
+
 } // namespace dc_impl
 
 

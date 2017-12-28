@@ -119,10 +119,14 @@ struct dc_init_param{
 
 // forward declarations
 class dc_services;
+class distributed_control;
 
 namespace dc_impl {
   class dc_buffered_stream_send2;
   class dc_stream_receive;
+
+
+  distributed_control* get_last_dc();
 }
 
 /**
@@ -312,6 +316,11 @@ class distributed_control{
   static procid_t last_dc_procid;
   // a pointer to the last distributed_control object created
   static distributed_control* last_dc;
+
+// MOD Joshua Send to make compile
+  static distributed_control* get_last_dc() {
+	return last_dc;
+  }
 
   /**
    * Gets the procid of the last distributed_control instance created.

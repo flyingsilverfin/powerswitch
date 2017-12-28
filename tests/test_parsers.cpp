@@ -88,7 +88,7 @@ void test_tsv(graphlab::distributed_control& dc) {
 
 void test_powerlaw(graphlab::distributed_control& dc) {
   graphlab::distributed_graph<size_t, size_t> graph(dc);
-  graph.load_synthetic_powerlaw(1000);
+  graph.load_synthetic_powerlaw(2.1, 1000); // MOD Joshua Send to make compile
   graph.finalize();
   ASSERT_EQ(graph.num_vertices(), 1000);
   std::cout << graph.num_edges() << " Edges\n";
@@ -97,7 +97,7 @@ void test_powerlaw(graphlab::distributed_control& dc) {
 
 void test_save_load(graphlab::distributed_control& dc) {
   graphlab::distributed_graph<size_t, size_t> graph(dc);
-  graph.load_synthetic_powerlaw(1000);
+  graph.load_synthetic_powerlaw(2.1, 1000); // MOD Joshua Send to make compile
   graph.finalize();
   ASSERT_EQ(graph.num_vertices(), 1000);
   graph.save_format("data/plawtest_tsv", "tsv");

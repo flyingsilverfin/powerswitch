@@ -391,6 +391,7 @@ def wait_for_cluster(conn, wait_secs, master_nodes, slave_nodes, zoo_nodes):
 # Get number of local disks available for a given EC2 instance type.
 def get_num_disks(instance_type):
   # From http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/index.html?InstanceStorage.html
+  # updated for Dec 2017 for m & c types
   disks_by_instance = {
     "m1.small":    1,
     "m1.large":    2,
@@ -403,7 +404,17 @@ def get_num_disks(instance_type):
     "m2.4xlarge":  2,
     "cc1.4xlarge": 2,
     "cc2.8xlarge": 4,
-    "cg1.4xlarge": 2
+    "cg1.4xlarge": 2,
+	"m3.medium: : 1,
+	"m3.large" : 1,
+	"m3.xlarge" : 2,
+	"m3.2xlarge" : 2,
+	"c3.large": 2,
+	"c3.xlarge" : 2,
+	"c3.2xlarge" : 2,
+	"c3.4xlarge" : 2,
+	"c3.8xlarge": 2,
+	"cr1.8xlarge" : 2
   }
   if instance_type in disks_by_instance:
     return disks_by_instance[instance_type]

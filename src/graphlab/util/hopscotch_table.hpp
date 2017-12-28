@@ -35,8 +35,13 @@
 #define _HOPSCOTCH_TABLE_DEFAULT_HASH boost::hash<T>
 
 
+
+
 namespace graphlab {
 
+// ADDITION Joshua Send to make compile work
+using boost::uint32_t;
+using boost::uint64_t;
 
 /**
   * This defines a hash table where each entry stores a

@@ -77,7 +77,7 @@ void test_in_neighbors(graphlab::distributed_control& dc,
 
   if (graph.is_dynamic()) {
     std::cout << "Test engine on dynamic graph !" << std::endl;
-    graph.load_synthetic_powerlaw(10000);
+    graph.load_synthetic_powerlaw(2.1, 10000); // MOD Joshua Send to make compile
     graph.finalize();
     engine.signal_all();
     std::cout << "Running!" << std::endl;
@@ -125,7 +125,7 @@ void test_out_neighbors(graphlab::distributed_control& dc,
 
   if (graph.is_dynamic()) {
     std::cout << "Test engine on dynamic graph !" << std::endl;
-    graph.load_synthetic_powerlaw(10000);
+    graph.load_synthetic_powerlaw(2.1, 10000);
     graph.finalize();
     engine.signal_all();
     std::cout << "Running!" << std::endl;
@@ -172,7 +172,7 @@ void test_all_neighbors(graphlab::distributed_control& dc,
   std::cout << "Finished" << std::endl;
   if (graph.is_dynamic()) {
     std::cout << "Test engine on dynamic graph !" << std::endl;
-    graph.load_synthetic_powerlaw(10000);
+    graph.load_synthetic_powerlaw(2.1, 10000);
     graph.finalize();
     engine.signal_all();
     std::cout << "Running!" << std::endl;
@@ -242,7 +242,7 @@ void test_messages(graphlab::distributed_control& dc,
   if (graph.is_dynamic()) {
     engine.init();
     std::cout << "Test engine on dynamic graph !" << std::endl;
-    graph.load_synthetic_powerlaw(10000);
+    graph.load_synthetic_powerlaw(2.1, 10000);
     graph.finalize();
     engine.signal_all(-1);
     std::cout << "Running!" << std::endl;
@@ -329,7 +329,7 @@ int main(int argc, char** argv) {
   clopts.engine_args.set_option("max_iterations", 10);
   std::cout << "Creating a powerlaw graph" << std::endl;
   graph_type graph(dc, clopts);
-  graph.load_synthetic_powerlaw(10000);
+  graph.load_synthetic_powerlaw(2.1, 10000);
   graph.finalize();
   test_in_neighbors(dc, clopts, graph);
   test_out_neighbors(dc, clopts, graph);

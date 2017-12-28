@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
   graphlab::distributed_control dc;
 
   graph_type graph(dc);
-  graph.load_synthetic_powerlaw(100000);
+  graph.load_synthetic_powerlaw(2.1, 100000); // MOD Joshua Send to make compile
   graph.finalize();
 
   dc.cout() << graph.vertex_set_size(graph.complete_set()) << " Vertices\n";
