@@ -65,7 +65,7 @@ find_program(MPIEXEC
 set(MPIEXEC_NUMPROC_FLAG "-np" CACHE STRING "Flag used by MPI to specify the number of processes for MPIEXEC; the next option will be the number of processes.")
 set(MPIEXEC_PREFLAGS "" CACHE STRING "These flags will be directly before the executable that is being run by MPIEXEC.")
 set(MPIEXEC_POSTFLAGS "" CACHE STRING "These flags will come after all flags given to MPIEXEC.")
-set(MPIEXEC_MAX_NUMPROCS "2" CACHE STRING "Maximum number of processors available to run MPI applications.")
+set(MPIEXEC_MAX_NUMPROCS "2" CACHE STRING "2PROC Maximum number of processors available to run MPI applications.")
 mark_as_advanced(MPIEXEC MPIEXEC_NUMPROC_FLAG MPIEXEC_PREFLAGS 
   MPIEXEC_POSTFLAGS MPIEXEC_MAX_NUMPROCS)
 
@@ -77,7 +77,7 @@ elseif (MPI_COMPILER)
   # that we have either Open MPI or a newer version of LAM-MPI, and
   # implies that -showme:link will also work.
   exec_program(${MPI_COMPILER} 
-    ARGS -showme:compile 
+    ARGS --showme:compile 
     OUTPUT_VARIABLE MPI_COMPILE_CMDLINE
     RETURN_VALUE MPI_COMPILER_RETURN)
 
@@ -85,7 +85,7 @@ elseif (MPI_COMPILER)
     # If we appear to have -showme:compile, then we should also have
     # -showme:link. Try it.
     exec_program(${MPI_COMPILER} 
-      ARGS -showme:link
+      ARGS --showme:link
       OUTPUT_VARIABLE MPI_LINK_CMDLINE
       RETURN_VALUE MPI_COMPILER_RETURN)
 
@@ -99,7 +99,7 @@ elseif (MPI_COMPILER)
   else (MPI_COMPILER_RETURN EQUAL 0)
     # Older versions of LAM-MPI have "-showme". Try it.
     exec_program(${MPI_COMPILER} 
-      ARGS -showme
+      ARGS --showme
       OUTPUT_VARIABLE MPI_COMPILE_CMDLINE
       RETURN_VALUE MPI_COMPILER_RETURN)
   endif (MPI_COMPILER_RETURN EQUAL 0)  
@@ -109,7 +109,7 @@ elseif (MPI_COMPILER)
   else (MPI_COMPILER_RETURN EQUAL 0)
     # MPICH uses "-show". Try it.
     exec_program(${MPI_COMPILER} 
-      ARGS -show
+      ARGS --show
       OUTPUT_VARIABLE MPI_COMPILE_CMDLINE
       RETURN_VALUE MPI_COMPILER_RETURN)
   endif (MPI_COMPILER_RETURN EQUAL 0)  
@@ -234,9 +234,9 @@ elseif (MPI_COMPILE_CMDLINE)
   if (MPI_NUMLIBS GREATER 1)
     set(MPI_EXTRA_LIBRARY_WORK ${MPI_LIBRARIES})
     list(REMOVE_AT MPI_EXTRA_LIBRARY_WORK 0)
-    set(MPI_EXTRA_LIBRARY ${MPI_EXTRA_LIBRARY_WORK} CACHE STRING "Extra MPI libraries to link against" FORCE)
+    set(MPI_EXTRA_LIBRARY ${MPI_EXTRA_LIBRARY_WORK} CACHE STRING "Extra MPI libraries to link against BLA" FORCE)
   else (MPI_NUMLIBS GREATER 1)
-    set(MPI_EXTRA_LIBRARY "MPI_EXTRA_LIBRARY-NOTFOUND" CACHE STRING "Extra MPI libraries to link against" FORCE)
+    set(MPI_EXTRA_LIBRARY "" CACHE STRING "Extra MPI libraries to link against TEST" FORCE)
   endif (MPI_NUMLIBS GREATER 1)
 
   # Set up all of the appropriate cache entries
