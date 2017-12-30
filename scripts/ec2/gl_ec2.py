@@ -34,8 +34,11 @@ from sys import stderr
 from boto.ec2.blockdevicemapping import BlockDeviceMapping, EBSBlockDeviceType
 
 # A static URL from which to figure out the latest Mesos EC2 AMI
-STD_AMI_URL = "https://s3.amazonaws.com/graphlabv2-ami/graphlab2-std"
-HVM_AMI_URL = "https://s3.amazonaws.com/graphlabv2-ami/graphlab2-hvm"
+
+#STD_AMI_URL = "https://s3.amazonaws.com/graphlabv2-ami/graphlab2-std"
+#HVM_AMI_URL = "https://s3.amazonaws.com/graphlabv2-ami/graphlab2-hvm"
+
+powerswitch_ami_id = "ami-ec667e88"
 
 
 # Configure and parse our command-line arguments
@@ -47,24 +50,24 @@ def parse_args():
                     help="Show this help message and exit")
   parser.add_option("-s", "--slaves", type="int", default=1,
       help="Number of slaves to launch (default: 1)")
-  parser.add_option("-w", "--wait", type="int", default=120,
-      help="Seconds to wait for nodes to start (default: 120)")
+  parser.add_option("-w", "--wait", type="int", default=60,
+      help="Seconds to wait for nodes to start (default: 60)")
   parser.add_option("-k", "--key-pair",
       help="Key pair to use on instances")
   parser.add_option("-i", "--identity-file", 
       help="SSH private key file to use for logging into instances")
-  parser.add_option("-t", "--instance-type", default="m1.large",
-      help="Type of instance to launch (default: m1.large). " +
+  parser.add_option("-t", "--instance-type", default="m4.large",
+      help="Type of instance to launch (default: m4.large). " +
            "WARNING: must be 64-bit; small instances won't work")
   parser.add_option("-m", "--master-instance-type", default="",
       help="Master instance type (leave empty for same as instance-type)")
-  parser.add_option("-r", "--region", default="us-east-1",
+  parser.add_option("-r", "--region", default="eu-west-2",
       help="EC2 region zone to launch instances in")
   parser.add_option("-z", "--zone", default="",
       help="Availability zone to launch instances in")
-  parser.add_option("-a", "--ami", default="std",
-      help="Amazon Machine Image ID to use, or 'hpc' to use ami for high performance instances" +
-           "(default: std)")
+  #parser.add_option("-a", "--ami", default="std",
+  #    help="Amazon Machine Image ID to use, or 'hpc' to use ami for high performance instances" +
+  #         "(default: std)")
   parser.add_option("-D", metavar="[ADDRESS:]PORT", dest="proxy_port", 
       help="Use SSH dynamic port forwarding to create a SOCKS proxy at " +
             "the given local address (for use with login)")
@@ -190,18 +193,20 @@ def launch_cluster(conn, opts, cluster_name):
             "group %s, %s or %s" % (master_group.name, slave_group.name, zoo_group.name))
         sys.exit(1)
 
-  if opts.ami == "std":
-    try:
-      opts.ami = urllib2.urlopen(STD_AMI_URL).read().strip()
-      print "GraphLab AMI for Standard Instances: " + opts.ami
-    except:
-      print >> stderr, "Could not read " + STD_AMI_URL
-  elif opts.ami == "hpc" :
-    try:
-      opts.ami = urllib2.urlopen(HVM_AMI_URL).read().strip()
-      print "GraphLab AMI for HPC Instances: " + opts.ami
-    except:
-      print >> stderr, "Could not read " + HVM_AMI_URL
+#  if opts.ami == "std":
+#    try:
+#      opts.ami = urllib2.urlopen(STD_AMI_URL).read().strip()
+#      print "GraphLab AMI for Standard Instances: " + opts.ami
+#    except:
+#      print >> stderr, "Could not read " + STD_AMI_URL
+#  elif opts.ami == "hpc" :
+#    try:
+#      opts.ami = urllib2.urlopen(HVM_AMI_URL).read().strip()
+#      print "GraphLab AMI for HPC Instances: " + opts.ami
+#    except:
+#      print >> stderr, "Could not read " + HVM_AMI_URL
+
+  opts.ami = powerswitch_ami_id
 
 
   print "Launching instances..."
@@ -294,20 +299,31 @@ def launch_cluster(conn, opts, cluster_name):
 # slaves and zookeeper nodes (in that order).
 def get_existing_cluster(conn, opts, cluster_name):
   print "Searching for existing cluster " + cluster_name + "..."
-  reservations = conn.get_all_instances()
+  #reservations = conn.get_all_instances()
+  instances = conn.get_only_instances()
+  print instances
   master_nodes = []
   slave_nodes = []
   zoo_nodes = []
-  for res in reservations:
-    active = [i for i in res.instances if is_active(i)]
-    if len(active) > 0:
-      group_names = [g.name for g in res.groups]
+  #for res in reservations:
+  for inst in instances:
+    #print res
+    #print res.instances
+    #active = [i for i in res.instances if is_active(i)]
+    active = is_active(inst)
+    #if len(active) > 0:
+    if active:
+      group_names = [g.name for g in inst.groups]
+      print group_names
       if group_names == [cluster_name + "-master"]:
-        master_nodes += res.instances
+        #master_nodes += res.instances
+        master_nodes.append( inst)
       elif group_names == [cluster_name + "-slaves"]:
-        slave_nodes += res.instances
+        #slave_nodes += res.instances
+        slave_nodes.append( inst)
       elif group_names == [cluster_name + "-zoo"]:
-        zoo_nodes += res.instances
+        #zoo_nodes += res.instances
+        zoo_nodes.append(inst)
   if master_nodes != [] and slave_nodes != []:
     print ("Found %d master(s), %d slaves, %d ZooKeeper nodes" %
            (len(master_nodes), len(slave_nodes), len(zoo_nodes)))
@@ -359,7 +375,7 @@ def setup_cluster(conn, master_nodes, slave_nodes, zoo_nodes, opts, cluster_name
     # ssh(master, opts, 'sudo mkdir -p /root/.ssh; mkdir tmp')
     # scp(master, opts, opts.identity_file, 'tmp/id_rsa')
     # ssh(master, opts, opts.identity_file, 'sudo mv tmp/id_rsa /root/.ssh/')
-    # scp(master, opts, opts.identity_file, '~/.ssh/id_rsa')
+    scp(master, opts, opts.identity_file, '~/.ssh/id_rsa')
   print "Copy hostfile to master..."
   hosts = get_internal_ips(conn, opts, cluster_name)
   hostfile = open("machines", "w")
@@ -391,7 +407,6 @@ def wait_for_cluster(conn, wait_secs, master_nodes, slave_nodes, zoo_nodes):
 # Get number of local disks available for a given EC2 instance type.
 def get_num_disks(instance_type):
   # From http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/index.html?InstanceStorage.html
-  # updated for Dec 2017 for m & c types
   disks_by_instance = {
     "m1.small":    1,
     "m1.large":    2,
@@ -405,7 +420,7 @@ def get_num_disks(instance_type):
     "cc1.4xlarge": 2,
     "cc2.8xlarge": 4,
     "cg1.4xlarge": 2,
-	"m3.medium: : 1,
+	"m3.medium" : 1,
 	"m3.large" : 1,
 	"m3.xlarge" : 2,
 	"m3.2xlarge" : 2,
@@ -414,7 +429,8 @@ def get_num_disks(instance_type):
 	"c3.2xlarge" : 2,
 	"c3.4xlarge" : 2,
 	"c3.8xlarge": 2,
-	"cr1.8xlarge" : 2
+	"cr1.8xlarge" : 2,
+	"m4.large": 2
   }
   if instance_type in disks_by_instance:
     return disks_by_instance[instance_type]
@@ -556,11 +572,10 @@ def main():
     if opts.proxy_port != None:
       proxy_opt = "-D " + opts.proxy_port
       # DB: patch to setup-hadoop file, remove when image is updated
-    scp(master, opts, "../ec2_tools/setup-hadoop", '/home/ubuntu/graphlabapi/scripts/ec2_tools/')
-    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"export PATH=$PATH:/opt/hadoop-1.0.1/bin;
+    scp(master, opts, "../ec2_tools/setup-hadoop", '/home/ubuntu/powerswitch/scripts/ec2_tools/')
+    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"
         export CLASSPATH=$CLASSPATH:.:\`hadoop classpath\`;
-        export JAVA_HOME=/usr/lib/jvm/java-6-sun;
-        alias mpiexec='mpiexec.openmpi -hostfile ~/machines -x CLASSPATH'; /home/ubuntu/graphlabapi/scripts/ec2_tools/setup-hadoop\"""" % (opts.identity_file, proxy_opt, master), shell=True)
+        alias mpiexec='mpiexec.openmpi -hostfile ~/machines -x CLASSPATH'; /home/ubuntu/powerswitch/scripts/ec2_tools/setup-hadoop\"""" % (opts.identity_file, proxy_opt, master), shell=True)
 
   elif action == "check-hadoop":
     (master_nodes, slave_nodes, zoo_nodes) = get_existing_cluster(
@@ -570,23 +585,21 @@ def main():
     proxy_opt = ""
     if opts.proxy_port != None:
       proxy_opt = "-D " + opts.proxy_port
-    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"export PATH=$PATH:/opt/hadoop-1.0.1/bin;
+    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"
         export CLASSPATH=$CLASSPATH:.:\`hadoop classpath\`;
-        export JAVA_HOME=/usr/lib/jvm/java-6-sun;
         jps\"""" % (opts.identity_file, proxy_opt, master), shell=True)
 
   elif action == "stop-hadoop":
     (master_nodes, slave_nodes, zoo_nodes) = get_existing_cluster(
         conn, opts, cluster_name)
     master = master_nodes[0].public_dns_name
-    print "Staring hadoop on master " + master + "..."
+    print "stopping hadoop on master " + master + "..."
     proxy_opt = ""
     if opts.proxy_port != None:
       proxy_opt = "-D " + opts.proxy_port
-    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"export PATH=$PATH:/opt/hadoop-1.0.1/bin;
+    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"
         export CLASSPATH=$CLASSPATH:.:\`hadoop classpath\`;
-        export JAVA_HOME=/usr/lib/jvm/java-6-sun;
-        alias mpiexec='mpiexec -hostfile ~/machines -x CLASSPATH'; /home/ubuntu/graphlabapi/deps/hadoop/src/hadoop/bin/stop-all.sh\"""" % (opts.identity_file, proxy_opt, master), shell=True)
+        alias mpiexec='mpiexec -hostfile ~/machines -x CLASSPATH'; /home/ubuntu/powerswitch/deps/hadoop/src/hadoop/bin/stop-all.sh\"""" % (opts.identity_file, proxy_opt, master), shell=True)
 
   elif action == "als_demo":
     (master_nodes, slave_nodes, zoo_nodes) = get_existing_cluster(
@@ -596,10 +609,9 @@ def main():
     proxy_opt = ""
     if opts.proxy_port != None:
       proxy_opt = "-D " + opts.proxy_port
-    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"export PATH=$PATH:/opt/hadoop-1.0.1/bin;
+    subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"
         export CLASSPATH=$CLASSPATH:.:\`hadoop classpath\`;
-        export JAVA_HOME=/usr/lib/jvm/java-6-sun;
-        cd graphlabapi/release/toolkits/collaborative_filtering/;
+        cd powerswitch/release/toolkits/collaborative_filtering/;
         rm -fR smallnetflix; mkdir smallnetflix;
         cd smallnetflix/;
         wget http://www.select.cs.cmu.edu/code/graphlab/datasets/smallnetflix_mm.train;
@@ -608,7 +620,7 @@ def main():
         hadoop fs -rmr hdfs://\`head -n 1 ~/machines\`/smallnetflix/;
         hadoop fs -copyFromLocal smallnetflix/ /;
         cat ~/machines
-        mpiexec.mpich2 -f ~/machines -envlist CLASSPATH -n 2 /home/ubuntu/graphlabapi/release/toolkits/collaborative_filtering/als --matrix hdfs://\`head -n 1 ~/machines\`/smallnetflix --max_iter=5 --ncpus=1;
+        mpiexec.mpich2 -f ~/machines -envlist CLASSPATH -n 2 /home/ubuntu/power/release/toolkits/collaborative_filtering/als --matrix hdfs://\`head -n 1 ~/machines\`/smallnetflix --max_iter=5 --ncpus=1;
         \"""" % (opts.identity_file, proxy_opt, master), shell=True)
 
   elif action == "update":
@@ -623,8 +635,8 @@ def main():
         export CLASSPATH=$CLASSPATH:.:`hadoop classpath`;
         export JAVA_HOME=/usr/lib/jvm/java-6-sun;
         alias mpiexec='mpiexec -hostfile ~/machines -x CLASSPATH'; 
-        cd graphlabapi/;
-        hg pull; hg update; ./configure; cd release/toolkits/collaborative_filtering/; make; cd ~/graphlabapi/release/toolkits;  ~/graphlabapi/scripts/mpirsync
+        cd powerswitch/;
+        hg pull; hg update; ./configure; cd release/toolkits/collaborative_filtering/; make; cd ~/powerswitch/release/toolkits;  ~/powerswitch/scripts/mpirsync
         \"""" % (opts.identity_file, proxy_opt, master), shell=True)
 
   elif action == "update-dbg":
@@ -637,8 +649,8 @@ def main():
       proxy_opt = "-D " + opts.proxy_port
     subprocess.check_call("""ssh -o StrictHostKeyChecking=no -i %s %s ubuntu@%s \"
         sudo apt-get install gdb; 
-        cd graphlabapi/;
-        hg pull; hg update; ./configure; cd debug; make; cd ~/graphlabapi/debug/toolkits;  ~/graphlabapi/scripts/mpirsync
+        cd powerswitch/;
+        hg pull; hg update; ./configure; cd debug; make; cd ~/powerswitch/debug/toolkits;  ~/powerswitch/scripts/mpirsync
         \"""" % (opts.identity_file, proxy_opt, master), shell=True)
 
   elif action == "get-master":

@@ -16,7 +16,7 @@ namenode=`head -n 1 ~/machines` # first node is the master
 echo "Setting up namenode information."
 echo "  namenode: " $namenode
 # mpiexec.openmpi -hostfile ~/machines -pernode \
-#     ~/bin/set-namenode.sh $namenode /opt/hadoop-1.0.1/conf/core-site.xml
+#     ~/bin/set-namenode.sh $namenode $HADOOP_HOME/conf/core-site.xml
 
 echo -e \
     '<?xml version="1.0"?>\n'\
@@ -30,10 +30,10 @@ echo -e \
     '    <name>hadoop.tmp.dir</name>\n'\
     '    <value>/mnt/hadoop/tmp</value>\n'\
     ' </property>\n'\
-    '</configuration>\n' > /opt/hadoop-1.0.1/conf/core-site.xml
-cat /opt/hadoop-1.0.1/conf/core-site.xml
+    '</configuration>\n' > $HADOOP_HOME/conf/core-site.xml
+cat $HADOOP_HOME/conf/core-site.xml
 mpiexec.openmpi -hostfile ~/machines -pernode \
-    scp $namenode:/opt/hadoop-1.0.1/conf/core-site.xml  /opt/hadoop-1.0.1/conf/core-site.xml
+    scp $namenode:$HADOOP_HOME/conf/core-site.xml  $HADOOP_HOME/conf/core-site.xml
 
 
 echo -e \
@@ -64,10 +64,10 @@ echo -e \
     '    <name>mapred.child.java.opts</name>\n' \
     '    <value>-Xmx1500m</value> \n' \
     '  </property> \n' \
-    '</configuration>\n' > /opt/hadoop-1.0.1/conf/mapred-site.xml
-cat /opt/hadoop-1.0.1/conf/mapred-site.xml
+    '</configuration>\n' > $HADOOP_HOME/conf/mapred-site.xml
+cat $HADOOP_HOME/conf/mapred-site.xml
 mpiexec.openmpi -hostfile ~/machines -pernode \
-    scp $namenode:/opt/hadoop-1.0.1/conf/mapred-site.xml  /opt/hadoop-1.0.1/conf/mapred-site.xml
+    scp $namenode:$HADOOP_HOME/conf/mapred-site.xml  $HADOOP_HOME/conf/mapred-site.xml
 
 
 
@@ -87,15 +87,15 @@ echo -e \
     '    <name>dfs.replication</name>\n' \
     '    <value>3</value> \n' \
     '  </property> \n' \
-    '</configuration>\n' > /opt/hadoop-1.0.1/conf/hdfs-site.xml
-cat /opt/hadoop-1.0.1/conf/hdfs-site.xml
+    '</configuration>\n' > $HADOOP_HOME/conf/hdfs-site.xml
+cat $HADOOP_HOME/conf/hdfs-site.xml
 mpiexec.openmpi -hostfile ~/machines -pernode \
-    scp $namenode:/opt/hadoop-1.0.1/conf/hdfs-site.xml  /opt/hadoop-1.0.1/conf/hdfs-site.xml
+    scp $namenode:$HADOOP_HOME/conf/hdfs-site.xml  $HADOOP_HOME/conf/hdfs-site.xml
 
 
-echo $namenode > /opt/hadoop-1.0.1/conf/masters
+echo $namenode > $HADOOP_HOME/conf/masters
 mpiexec.openmpi -hostfile ~/machines -pernode \
-    scp $namenode:/opt/hadoop-1.0.1/conf/masters  /opt/hadoop-1.0.1/conf/masters
+    scp $namenode:$HADOOP_HOME/conf/masters  $HADOOP_HOME/conf/masters
 
 
 
